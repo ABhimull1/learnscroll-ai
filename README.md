@@ -29,3 +29,6 @@ Uses official YouTube embedded players. Does not download, alter, or obscure pla
 - When the user nears the end, one automatic YouTube search may run, throttled to at most once per 30 minutes per open page. This uses API quota.
 - Discovery uses keyword and exclusion heuristics, not factual verification. Existing previously discovered irrelevant videos are not removed automatically.
 - To deploy: upload/replace index.html, app.js, sw.js, manifest.webmanifest and README.md in the root of the existing GitHub repository. Never upload an API key.
+
+## V3 sound controls
+Tap Sound on once to request unmuted playback and set YouTube player volume to 100%. The preference is saved locally. Chrome may block audible autoplay when moving to a new embedded video; tapping Play inside the YouTube player may still be necessary. Device media volume is controlled by Android, not the website.

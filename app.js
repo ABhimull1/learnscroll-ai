@@ -7,10 +7,14 @@ const url=v=>'https://www.youtube.com/watch?v='+encodeURIComponent(v.id);
 function nav(t){tab=t;document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));render()}
 function render(){document.getElementById('count').textContent=videos.length+' videos';if(tab==='feed')feed();else if(tab==='saved')savedView();else if(tab==='discover')discover();else settingsView()}
 let feedObserver=null,autoFetchBusy=false,lastAutoFetch=0;
+let soundOn=get('ls_sound_on',false);
+function playerCommand(frame,func,args=[]){if(frame?.contentWindow)frame.contentWindow.postMessage(JSON.stringify({event:'command',func,args}),'https://www.youtube.com')}
+function setSound(frame){if(!frame)return;playerCommand(frame,'setVolume',[100]);if(soundOn){playerCommand(frame,'unMute');playerCommand(frame,'playVideo')}else playerCommand(frame,'mute')}
+
 function feed(){
  const arr=videos.filter(v=>settings.topics.includes(v.topic));
  if(!arr.length){el.innerHTML='<div class="empty"><h2>Your learning feed is ready</h2><p>Open Discover to fetch educational Shorts.</p><button class="action" id="go">Discover videos</button></div>';document.getElementById('go').onclick=()=>nav('discover');return}
- el.innerHTML='<section class="feed" id="feed">'+arr.map((v,i)=>`<article class="slide" data-index="${i}"><div class="player" data-id="${esc(v.id)}"><span class="hint">Loading video…</span></div><div class="load-hint">Swipe up for the next Short · Tap player to unmute</div><div class="overlay"><div class="title">${esc(v.title)}</div><div class="meta">${esc(v.channel)} · ${esc(v.topic)} · ${esc(v.duration||'Short')}</div></div><div class="actions"><button data-save="${esc(v.id)}">${saved.some(x=>x.id===v.id)?'♥ Saved':'♡ Save'}</button><button data-share="${esc(v.id)}">↗ Share</button><button data-open="${esc(v.id)}">YouTube ↗</button></div></article>`).join('')+'</section>';
+ el.innerHTML='<section class="feed" id="feed">'+arr.map((v,i)=>`<article class="slide" data-index="${i}"><div class="player" data-id="${esc(v.id)}"><span class="hint">Loading video…</span></div><div class="load-hint">Swipe up for the next Short · Sound may require a tap</div><div class="overlay"><div class="title">${esc(v.title)}</div><div class="meta">${esc(v.channel)} · ${esc(v.topic)} · ${esc(v.duration||'Short')}</div></div><div class="actions"><button data-sound aria-label="Toggle sound">${soundOn?'🔊 Sound on':'🔇 Sound off'}</button><button data-save="${esc(v.id)}">${saved.some(x=>x.id===v.id)?'♥ Saved':'♡ Save'}</button><button data-share="${esc(v.id)}">↗ Share</button><button data-open="${esc(v.id)}">YouTube ↗</button></div></article>`).join('')+'</section>';
  const f=document.getElementById('feed');f.scrollTop=Math.min(lastScroll,Math.max(0,f.scrollHeight-f.clientHeight));
  let activeId=null;
  if(feedObserver)feedObserver.disconnect();
@@ -20,15 +24,17 @@ function feed(){
    if(activeId===id)continue;activeId=id;
    f.querySelectorAll('.player').forEach(other=>{if(other!==p)other.replaceChildren()});
    p.replaceChildren();const iframe=document.createElement('iframe');iframe.title='YouTube embedded video';
-   // Autoplay is requested muted to comply with mobile browser autoplay rules.
-   iframe.src='https://www.youtube.com/embed/'+encodeURIComponent(id)+'?playsinline=1&autoplay=1&mute=1&rel=0&enablejsapi=1';
+   // Audible autoplay may be blocked by Chrome; user-initiated sound activation is supported.
+   iframe.src='https://www.youtube.com/embed/'+encodeURIComponent(id)+'?playsinline=1&autoplay=1&mute='+(soundOn?'0':'1')+'&rel=0&enablejsapi=1&origin='+encodeURIComponent(location.origin);
    iframe.allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
    iframe.referrerPolicy='strict-origin-when-cross-origin';iframe.allowFullscreen=true;p.appendChild(iframe);
+   iframe.addEventListener('load',()=>{setSound(iframe);setTimeout(()=>setSound(iframe),700)},{once:true});
    // Preload more results only near the end, with a 30-minute guard to limit API quota.
    if(Number(e.target.dataset.index)>=arr.length-4)maybeFetchMore();
   }
  },{root:f,threshold:[.65]});f.querySelectorAll('.slide').forEach(sl=>feedObserver.observe(sl));
  f.addEventListener('scroll',()=>{lastScroll=f.scrollTop},{passive:true});
+ el.querySelectorAll('[data-sound]').forEach(b=>b.onclick=()=>{soundOn=!soundOn;put('ls_sound_on',soundOn);el.querySelectorAll('[data-sound]').forEach(x=>x.textContent=soundOn?'🔊 Sound on':'🔇 Sound off');setSound(f.querySelector('.player iframe'));});
  el.querySelectorAll('[data-save]').forEach(b=>b.onclick=()=>toggleSave(b.dataset.save));
  el.querySelectorAll('[data-share]').forEach(b=>b.onclick=()=>share(b.dataset.share));
  el.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>window.open(url(videos.find(v=>v.id===b.dataset.open)),'_blank','noopener'));
