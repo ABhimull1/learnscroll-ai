@@ -20,3 +20,12 @@ Uses official YouTube embedded players. Does not download, alter, or obscure pla
 - app.js: feed, discovery, bookmarking, sharing, settings
 - sw.js: static shell caching
 - manifest.webmanifest: install metadata
+
+
+## V2 immersive feed
+- The Feed now uses full-screen vertical Shorts with a floating Save/Share/Open toolbar.
+- Only the visible YouTube iframe is loaded; the prior one is unloaded when you swipe.
+- Muted autoplay is requested for the newly visible video. YouTube and mobile browser policies may still block autoplay; tap Play or unmute in YouTube controls when necessary.
+- When the user nears the end, one automatic YouTube search may run, throttled to at most once per 30 minutes per open page. This uses API quota.
+- Discovery uses keyword and exclusion heuristics, not factual verification. Existing previously discovered irrelevant videos are not removed automatically.
+- To deploy: upload/replace index.html, app.js, sw.js, manifest.webmanifest and README.md in the root of the existing GitHub repository. Never upload an API key.
