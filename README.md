@@ -32,3 +32,7 @@ Uses official YouTube embedded players. Does not download, alter, or obscure pla
 
 ## V3 sound controls
 Tap Sound on once to request unmuted playback and set YouTube player volume to 100%. The preference is saved locally. Chrome may block audible autoplay when moving to a new embedded video; tapping Play inside the YouTube player may still be necessary. Device media volume is controlled by Android, not the website.
+
+## V4 audio continuity experiment
+
+The feed now attempts to move one YouTube iframe between slides and changes videos using the YouTube IFrame Player API's `loadVideoById` command. Sound preference defaults to on for new users, is stored in browser localStorage, and the player is requested to unmute at 100% volume. Android Chrome and YouTube may still prevent audible autoplay; this is an experimental improvement, not a guaranteed workaround. No API key is included in these files. Existing browser bookmarks and settings remain in localStorage.
